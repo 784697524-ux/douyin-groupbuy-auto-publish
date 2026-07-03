@@ -1,0 +1,148 @@
+---
+name: douyin-groupbuy-auto-publish
+description: Automate Douyin local-life group-buy promotion from 抖音来客/生意经 product selection to public image-note brief generation and Douyin Creator Center publishing with BGM and domestic POI. Use when Codex needs to select yesterday's top-selling coupon, generate conversion-oriented image prompts/copy, publish a Douyin 图文团购 note, or replay the proven Automa-style music and location flow.
+---
+
+# Douyin Group-Buy Auto Publish
+
+## Scope
+
+Use this skill for the full Douyin local-life coupon promotion path:
+
+1. Select ranked coupons from 抖音来客/生意经.
+2. Convert selected product facts into public-facing title, caption, and image prompts.
+3. Generate 3-5 poster images with the installed `imagegen` skill.
+4. Publish the prepared image note to Douyin with recommended music and a domestic group-buy POI.
+
+Do not expose backend product IDs, sales counts, ranking numbers, cookies, QR codes, or private logs in public captions or generated posters.
+
+## Runtime
+
+This skill wraps an existing `social-auto-upload` runtime.
+
+Default runtime:
+
+```bash
+export SOCIAL_AUTO_UPLOAD_HOME="${SOCIAL_AUTO_UPLOAD_HOME:-$HOME/.openclaw/workspace/social-auto-upload}"
+```
+
+The runtime must provide:
+
+```text
+$SOCIAL_AUTO_UPLOAD_HOME/.venv/bin/sau
+```
+
+Before first use, apply the Douyin group-buy patch:
+
+```bash
+./scripts/apply_douyin_groupbuy_patch.sh
+```
+
+## Main Workflow
+
+Check login first:
+
+```bash
+./bin/sau douyin check --account <douyin_account>
+```
+
+Select products:
+
+```bash
+python scripts/douyin_groupbuy_pipeline.py select \
+  --account <douyin_account> \
+  --groupid <laike_groupid> \
+  --date "昨天" \
+  --metric "商品成交券数" \
+  --limit 3 \
+  --output /path/to/selection.json \
+  --headed
+```
+
+If the standalone browser lands on the 生意经 login page, reuse an already logged-in Chrome session:
+
+```bash
+python scripts/douyin_groupbuy_pipeline.py select \
+  --account <douyin_account> \
+  --output /path/to/selection.json \
+  --cdp-url http://127.0.0.1:9222 \
+  --headed
+```
+
+Create the public work package:
+
+```bash
+python scripts/douyin_groupbuy_pipeline.py brief \
+  --selection /path/to/selection.json \
+  --product-index 1 \
+  --output-dir /path/to/groupbuy_work \
+  --location "合肥滨湖银泰百货"
+```
+
+Then read `/path/to/groupbuy_work/image_prompts.md` and use `imagegen` to generate 3-5 images into:
+
+```text
+/path/to/groupbuy_work/images/
+```
+
+Publish:
+
+```bash
+python scripts/douyin_groupbuy_pipeline.py publish \
+  --account <douyin_account> \
+  --work-dir /path/to/groupbuy_work \
+  --location "合肥滨湖银泰百货" \
+  --bgm auto \
+  --headed
+```
+
+## One-Step Selection And Brief
+
+Use `run` to select products and create the work package in one command. It does not generate native images by itself.
+
+```bash
+python scripts/douyin_groupbuy_pipeline.py run \
+  --account <douyin_account> \
+  --groupid <laike_groupid> \
+  --date "昨天" \
+  --metric "商品成交券数" \
+  --limit 3 \
+  --output /path/to/selection.json \
+  --product-index 1 \
+  --output-dir /path/to/groupbuy_work \
+  --location "合肥滨湖银泰百货" \
+  --headed
+```
+
+## POI Rules
+
+The publish path must use:
+
+1. `添加标签` = `位置`
+2. mode = `带货模式`
+3. location tab = `国内`
+4. type POI into the location input
+5. wait for candidates
+6. select a matching mall-level candidate
+
+The bundled patch scores candidates so mall-level POIs like `合肥滨湖银泰百货` outrank shop-level POIs like `植村秀(滨湖银泰城店)`.
+
+## Success Criteria
+
+Selection succeeds only when the JSON contains ranked products and Laike detail facts.
+
+Brief generation succeeds only when the work directory contains:
+
+- `title.txt`
+- `caption.txt`
+- `image_prompts.md`
+- `publish_meta.json`
+- `images/`
+
+Publishing succeeds only when the CLI exits successfully and Douyin reports a success state or enters the creator management page. If Douyin requests SMS verification or captcha, wait for the user/operator and do not report success early.
+
+## References
+
+- `references/usage.md`: user-facing install and CLI examples
+- `references/automa-selectors.md`: proven music and location selectors
+- `references/public-copy-rules.md`: public promotion copy rules
