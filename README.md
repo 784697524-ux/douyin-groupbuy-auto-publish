@@ -1,6 +1,18 @@
-# douyin-groupbuy-auto-publish
+# 抖音团购选品图文发布自动化
 
 抖音本地生活团购图文自动发布技能包：从生意经选品，到生成公开推广内容，再到抖音图文发布并挂团购位置。
+
+![抖音团购选品图文发布自动化流程](assets/workflow.svg)
+
+## 这个技能是干嘛的
+
+把原来需要人工反复操作的链路串起来：
+
+1. 去抖音来客/生意经看昨天卖得好的卡券。
+2. 回到来客商品管理查商品详情。
+3. 生成对外推广用的标题、正文和海报 prompt。
+4. 用 Codex 原生生图生成 3-5 张图文海报。
+5. 自动上传抖音图文，选择推荐音乐，并挂正确的国内团购位置。
 
 ## 能力清单
 
@@ -13,6 +25,8 @@
 | 原生生图 | Codex skill 化 | `image_prompts.md` + `imagegen` | 用 ChatGPT/Codex 原生生图生成 3-5 张海报 |
 | 图文发布 | 是 | `douyin_groupbuy_pipeline.py publish` | 上传图片、选音乐、挂国内 POI、发布 |
 | 团购位置 | 是 | runtime patch | 强制 `位置 -> 带货模式 -> 国内 -> 输入 POI -> 选匹配候选` |
+
+![命令和产物关系](assets/usage-map.svg)
 
 ## 安装
 
@@ -88,6 +102,10 @@ python scripts/douyin_groupbuy_pipeline.py publish \
   --bgm auto \
   --headed
 ```
+
+位置选择会走下面这条固定链路，避免选成店铺级 POI：
+
+![团购位置选择示意](assets/poi-location.svg)
 
 ## 成功标准
 

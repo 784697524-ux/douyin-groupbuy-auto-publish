@@ -1,9 +1,9 @@
 ---
 name: douyin-groupbuy-auto-publish
-description: Automate Douyin local-life group-buy promotion from 抖音来客/生意经 product selection to public image-note brief generation and Douyin Creator Center publishing with BGM and domestic POI. Use when Codex needs to select yesterday's top-selling coupon, generate conversion-oriented image prompts/copy, publish a Douyin 图文团购 note, or replay the proven Automa-style music and location flow.
+description: 抖音团购选品图文发布自动化。Automate Douyin local-life group-buy promotion from 抖音来客/生意经 product selection to public image-note brief generation and Douyin Creator Center publishing with BGM and domestic POI. Use when Codex needs to select yesterday's top-selling coupon, generate conversion-oriented image prompts/copy, publish a Douyin 图文团购 note, or replay the proven Automa-style music and location flow.
 ---
 
-# Douyin Group-Buy Auto Publish
+# 抖音团购选品图文发布自动化
 
 ## Scope
 

@@ -1,5 +1,9 @@
 # 使用说明
 
+![抖音团购选品图文发布自动化流程](../assets/workflow.svg)
+
+这个技能做三件事：先从抖音来客/生意经选出值得推广的卡券，再生成公开图文内容，最后自动发布抖音图文并挂团购位置。
+
 ## 1. 应用 runtime patch
 
 ```bash
@@ -12,6 +16,8 @@
 - `sau douyin upload-note --location --bgm`
 - `sau douyin upload-video --location`
 - 抖音发布页国内 POI 选择逻辑
+
+![命令和产物关系](../assets/usage-map.svg)
 
 ## 2. 选品
 
@@ -63,5 +69,7 @@ python scripts/douyin_groupbuy_pipeline.py publish \
   --bgm auto \
   --headed
 ```
+
+![团购位置选择示意](../assets/poi-location.svg)
 
 首次跑新账号或新 POI 时保留 `--headed`，便于观察验证码、风控和位置候选。
