@@ -39,10 +39,10 @@
   <text x="842" y="202" font-family="Arial,'PingFang SC','Microsoft YaHei',sans-serif" font-size="22" font-weight="700" fill="#111827">3. publish 发布</text>
   <rect x="842" y="228" width="266" height="128" rx="14" fill="#0f172a"/>
   <text x="862" y="260" font-family="Menlo,Consolas,monospace" font-size="14" fill="#e5e7eb">python scripts/...</text>
-  <text x="862" y="286" font-family="Menlo,Consolas,monospace" font-size="14" fill="#e5e7eb">publish --work-dir ...</text>
+  <text x="862" y="286" font-family="Menlo,Consolas,monospace" font-size="14" fill="#e5e7eb">publish / publish-video</text>
   <text x="862" y="312" font-family="Menlo,Consolas,monospace" font-size="14" fill="#e5e7eb">--location 合肥滨湖银泰百货</text>
   <text x="862" y="338" font-family="Menlo,Consolas,monospace" font-size="14" fill="#e5e7eb">--bgm auto --headed</text>
-  <text x="842" y="396" font-family="Arial,'PingFang SC','Microsoft YaHei',sans-serif" font-size="16" fill="#475569">动作：上传图文、选择音乐、挂 POI</text>
+  <text x="842" y="396" font-family="Arial,'PingFang SC','Microsoft YaHei',sans-serif" font-size="16" fill="#475569">动作：上传图文或视频、挂国内 POI</text>
   <text x="842" y="426" font-family="Arial,'PingFang SC','Microsoft YaHei',sans-serif" font-size="16" fill="#475569">成功：进入作品管理页或平台成功状态</text>
 
   <rect x="78" y="624" width="1044" height="54" rx="18" fill="#fff0f4"/>
