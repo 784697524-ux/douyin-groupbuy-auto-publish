@@ -2,13 +2,15 @@
 
 ![抖音团购选品图文发布自动化流程](../assets/workflow.svg)
 
-这个技能做三件事：先从抖音来客/生意经选出值得推广的卡券，再生成公开图文内容，最后自动发布抖音图文并挂团购位置。
+这个技能做三件事：先从抖音来客/生意经选出值得推广的卡券，再生成公开内容，最后自动发布抖音图文或视频并挂团购位置。
 
 ## 1. 应用 runtime patch
 
 ```bash
 ./scripts/apply_douyin_groupbuy_patch.sh
 ```
+
+这一步会同时安装单浏览器修复。后续每次图文或视频发布只启动一个 Chrome 会话，不再先连续打开多个窗口做 cookie 预检。
 
 它会给本机 `social-auto-upload` runtime 增加：
 
@@ -73,3 +75,20 @@ python scripts/douyin_groupbuy_pipeline.py publish \
 ![团购位置选择示意](../assets/poi-location.svg)
 
 首次跑新账号或新 POI 时保留 `--headed`，便于观察验证码、风控和位置候选。
+
+## 6. 发布视频
+
+```bash
+./bin/douyin-groupbuy publish-video \
+  --account <douyin_account> \
+  --file /path/to/video.mp4 \
+  --title "<作品标题>" \
+  --desc "<作品简介>" \
+  --tags "杭州中大银泰,杭州团购,本地生活" \
+  --location "杭州中大银泰百货" \
+  --headed
+```
+
+正常发布直接运行上面的命令即可，不要在每次发布前额外执行 `douyin check`。账号失效时，同一个发布窗口会给出重新登录提示。
+
+CLI 会完成：上传视频、选择位置、进入国内位置、输入门店、等待候选、选择匹配门店并发布。只有日志出现目标门店且平台返回发布成功，才算完成。

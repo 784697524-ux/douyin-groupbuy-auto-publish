@@ -1,9 +1,9 @@
 ---
 name: douyin-groupbuy-auto-publish
-description: 抖音团购选品图文发布自动化。Automate Douyin local-life group-buy promotion from 抖音来客/生意经 product selection to public image-note brief generation and Douyin Creator Center publishing with BGM and domestic POI. Use when Codex needs to select yesterday's top-selling coupon, generate conversion-oriented image prompts/copy, publish a Douyin 图文团购 note, or replay the proven Automa-style music and location flow.
+description: 抖音团购选品图文/视频发布自动化。Automate Douyin local-life group-buy promotion from product selection to image-note or video publishing with a domestic POI. Use when Codex needs to publish Douyin 图文或视频并挂带货模式国内位置。
 ---
 
-# 抖音团购选品图文发布自动化
+# 抖音团购选品图文/视频发布自动化
 
 ## Scope
 
@@ -12,7 +12,7 @@ Use this skill for the full Douyin local-life coupon promotion path:
 1. Select ranked coupons from 抖音来客/生意经.
 2. Convert selected product facts into public-facing title, caption, and image prompts.
 3. Generate 3-5 poster images with the installed `imagegen` skill.
-4. Publish the prepared image note to Douyin with recommended music and a domestic group-buy POI.
+4. Publish the prepared image note with music, or publish one prepared video, with a domestic group-buy POI.
 
 Do not expose backend product IDs, sales counts, ranking numbers, cookies, QR codes, or private logs in public captions or generated posters.
 
@@ -37,6 +37,8 @@ Before first use, apply the Douyin group-buy patch:
 ```bash
 ./scripts/apply_douyin_groupbuy_patch.sh
 ```
+
+The patch also removes the separate cookie-preflight browsers. A publish command now opens one Chrome session and validates login inside that same session.
 
 ## Main Workflow
 
@@ -96,6 +98,21 @@ python scripts/douyin_groupbuy_pipeline.py publish \
   --headed
 ```
 
+Publish video with the verified domestic group-buy POI flow:
+
+```bash
+./bin/douyin-groupbuy publish-video \
+  --account <douyin_account> \
+  --file /path/to/video.mp4 \
+  --title "<作品标题>" \
+  --desc "<作品简介>" \
+  --tags "杭州中大银泰,杭州团购,本地生活" \
+  --location "杭州中大银泰百货" \
+  --headed
+```
+
+Do not run `douyin check` before every publish. Use it only for explicit account diagnostics; `publish-video` validates the account in its single upload browser session.
+
 ## One-Step Selection And Brief
 
 Use `run` to select products and create the work package in one command. It does not generate native images by itself.
@@ -124,6 +141,8 @@ The publish path must use:
 4. type POI into the location input
 5. wait for candidates
 6. select a matching mall-level candidate
+
+The video page may omit the second mode selector and show `输入地理位置` directly. The bundled video patch handles both page variants.
 
 The bundled patch scores candidates so mall-level POIs like `合肥滨湖银泰百货` outrank shop-level POIs like `植村秀(滨湖银泰城店)`.
 

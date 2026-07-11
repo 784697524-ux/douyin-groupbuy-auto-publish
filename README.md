@@ -1,6 +1,6 @@
-# 抖音团购选品图文发布自动化
+# 抖音团购选品图文/视频发布自动化
 
-抖音本地生活团购图文自动发布技能包：从生意经选品，到生成公开推广内容，再到抖音图文发布并挂团购位置。
+抖音本地生活团购内容自动发布技能包：从生意经选品，到生成公开推广内容，再到抖音图文或视频发布并挂团购位置。
 
 ![抖音团购选品图文发布自动化流程](assets/workflow.svg)
 
@@ -12,7 +12,7 @@
 2. 回到来客商品管理查商品详情。
 3. 生成对外推广用的标题、正文和海报 prompt。
 4. 用 Codex 原生生图生成 3-5 张图文海报。
-5. 自动上传抖音图文，选择推荐音乐，并挂正确的国内团购位置。
+5. 自动上传抖音图文或视频，并挂正确的国内团购位置；图文可同时选择推荐音乐。
 
 ## 能力清单
 
@@ -24,7 +24,9 @@
 | 公开 brief | 是 | `douyin_groupbuy_pipeline.py brief` | 生成标题、正文、图片 prompt 和发布元数据 |
 | 原生生图 | Codex skill 化 | `image_prompts.md` + `imagegen` | 用 ChatGPT/Codex 原生生图生成 3-5 张海报 |
 | 图文发布 | 是 | `douyin_groupbuy_pipeline.py publish` | 上传图片、选音乐、挂国内 POI、发布 |
+| 视频发布 | 是 | `./bin/douyin-groupbuy publish-video` | 上传单条视频、挂带货模式国内 POI、发布 |
 | 团购位置 | 是 | runtime patch | 强制 `位置 -> 带货模式 -> 国内 -> 输入 POI -> 选匹配候选` |
+| 单浏览器发布 | 是 | runtime patch | 发布时不再另开 3 次 cookie 预检窗口，上传和登录校验共用一个 Chrome 会话 |
 
 ![命令和产物关系](assets/usage-map.svg)
 
@@ -51,7 +53,7 @@ export SOCIAL_AUTO_UPLOAD_HOME="/path/to/social-auto-upload"
 
 ## 快速使用
 
-检查登录：
+需要单独确认账号状态时再检查登录；正常发布可直接运行发布命令：
 
 ```bash
 ./bin/sau douyin check --account likai_douyin_2
@@ -103,6 +105,23 @@ python scripts/douyin_groupbuy_pipeline.py publish \
   --headed
 ```
 
+发布视频并挂团购位置：
+
+```bash
+./bin/douyin-groupbuy publish-video \
+  --account likai_douyin_2 \
+  --file /path/to/video.mp4 \
+  --title "猛男被叫美女后，真香买了19.9逛吃卡" \
+  --desc "中大银泰服务台短剧，19.9逛吃卡真香反转。" \
+  --tags "杭州中大银泰,19块9逛吃卡,杭州团购,本地生活" \
+  --location "杭州中大银泰百货" \
+  --headed
+```
+
+该命令复用已验证成功的视频发布链路：`位置 -> 带货模式/视频位置入口 -> 国内 -> 输入门店 -> 等待候选 -> 选择匹配项 -> 发布`。
+
+发布命令只启动一个 Chrome 会话。它会在这个会话里同时检查登录状态并完成上传；cookie 失效时会提示先执行 `douyin login`，不会再连续打开 4-5 个窗口。
+
 位置选择会走下面这条固定链路，避免选成店铺级 POI：
 
 ![团购位置选择示意](assets/poi-location.svg)
@@ -111,7 +130,7 @@ python scripts/douyin_groupbuy_pipeline.py publish \
 
 - 选品：输出 `selection.json`，且包含商品名、商品 ID、公开文案所需商品信息。
 - 生成：工作目录包含 `title.txt`、`caption.txt`、`image_prompts.md`、`publish_meta.json`、`images/`。
-- 发布：CLI 返回发布成功，并进入作品管理页或平台成功状态。
+- 发布：CLI 返回发布成功，并进入作品管理页或平台成功状态；日志必须出现已选择的目标门店。
 
 如果出现短信验证码、验证码、位置候选错误，不能算发布完成。
 

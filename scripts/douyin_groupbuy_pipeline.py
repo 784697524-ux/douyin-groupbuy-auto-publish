@@ -149,6 +149,41 @@ def publish_note(args: argparse.Namespace) -> None:
     run(cmd)
 
 
+def publish_video(args: argparse.Namespace) -> None:
+    video = args.file.expanduser()
+    if not video.is_file():
+        raise SystemExit(f"video not found: {video}")
+    if not args.location.strip():
+        raise SystemExit("missing --location")
+
+    cmd = [
+        str(SAU),
+        "douyin",
+        "upload-video",
+        "--account",
+        args.account,
+        "--file",
+        str(video),
+        "--title",
+        args.title,
+        "--location",
+        args.location,
+    ]
+    if args.desc:
+        cmd.extend(["--desc", args.desc])
+    if args.tags:
+        cmd.extend(["--tags", args.tags])
+    if args.thumbnail:
+        thumbnail = args.thumbnail.expanduser()
+        if not thumbnail.is_file():
+            raise SystemExit(f"thumbnail not found: {thumbnail}")
+        cmd.extend(["--thumbnail", str(thumbnail)])
+    if args.debug:
+        cmd.append("--debug")
+    cmd.append("--headless" if args.headless else "--headed")
+    run(cmd)
+
+
 def run_pipeline(args: argparse.Namespace) -> None:
     selection = select_products(args)
     brief_args = argparse.Namespace(
@@ -216,6 +251,23 @@ def parse_args() -> argparse.Namespace:
     publish_runtime.add_argument("--headless", dest="headless", action="store_true")
     publish_parser.set_defaults(headless=False)
 
+    video_parser = commands.add_parser(
+        "publish-video",
+        help="Publish one video with the domestic group-buy POI flow",
+    )
+    video_parser.add_argument("--account", required=True)
+    video_parser.add_argument("--file", type=Path, required=True)
+    video_parser.add_argument("--title", required=True)
+    video_parser.add_argument("--desc", default="")
+    video_parser.add_argument("--tags", default="")
+    video_parser.add_argument("--location", required=True)
+    video_parser.add_argument("--thumbnail", type=Path)
+    video_parser.add_argument("--debug", action="store_true")
+    video_runtime = video_parser.add_mutually_exclusive_group()
+    video_runtime.add_argument("--headed", dest="headless", action="store_false")
+    video_runtime.add_argument("--headless", dest="headless", action="store_true")
+    video_parser.set_defaults(headless=False)
+
     run_parser = commands.add_parser("run", help="Select products, create brief, and optionally publish")
     add_common_selection_args(run_parser)
     run_parser.add_argument("--product-index", type=int, default=1)
@@ -237,6 +289,8 @@ def main() -> int:
         build_brief(args)
     elif args.command == "publish":
         publish_note(args)
+    elif args.command == "publish-video":
+        publish_video(args)
     elif args.command == "run":
         run_pipeline(args)
     return 0
