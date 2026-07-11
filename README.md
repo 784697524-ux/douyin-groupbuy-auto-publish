@@ -1,111 +1,59 @@
 # 抖音团购选品图文/视频发布自动化
 
-抖音本地生活团购内容自动发布技能包：从生意经选品，到生成公开推广内容，再到抖音图文或视频发布并挂团购位置。
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
+![CLI](https://img.shields.io/badge/CLI-ready-111827)
+![Douyin](https://img.shields.io/badge/抖音-图文%20%2B%20视频-ef255c)
 
-![抖音团购选品图文发布自动化流程](assets/workflow.svg)
+把抖音本地生活内容生产里最重复的操作串成一条命令链：
 
-## 这个技能是干嘛的
+**生意经选品 → 查询商品详情 → 生成公开推广工作包 → 原生生图 → 发布图文或视频 → 挂国内团购位置。**
 
-把原来需要人工反复操作的链路串起来：
+![抖音团购选品图文视频发布自动化流程](assets/workflow.svg)
 
-1. 去抖音来客/生意经看昨天卖得好的卡券。
-2. 回到来客商品管理查商品详情。
-3. 生成对外推广用的标题、正文和海报 prompt。
-4. 用 Codex 原生生图生成 3-5 张图文海报。
-5. 自动上传抖音图文或视频，并挂正确的国内团购位置；图文可同时选择推荐音乐。
+## 一眼看懂
 
-## 能力清单
+| 你提供什么 | 脚本自动处理什么 | 最后得到什么 |
+| --- | --- | --- |
+| 抖音账号、来客主体和选品条件 | 从生意经读取排名商品，再查询商品详情 | `selection.json` |
+| 选中的卡券和推广门店 | 生成标题、正文、图片提示词和发布元数据 | 一套公开推广工作包 |
+| 3-5 张生图海报 | 上传图片、选择音乐、挂国内 POI | 抖音团购图文 |
+| 一条已经生成的视频 | 填写标题简介、挂带货位置并发布 | 抖音团购视频 |
 
-| 模块 | 是否 CLI/Python 化 | 入口 | 说明 |
-| --- | --- | --- | --- |
-| 登录检查 | 是 | `./bin/sau douyin check` | 检查抖音账号 cookie 是否有效 |
-| 选品 | 是 | `douyin_groupbuy_pipeline.py select` | 进抖音来客/生意经，按昨日成交券数等指标取商品 |
-| 商品详情读取 | 是 | `sau douyin select-groupbuy-products` | 通过商品 ID 回到来客商品管理读取详情 |
-| 公开 brief | 是 | `douyin_groupbuy_pipeline.py brief` | 生成标题、正文、图片 prompt 和发布元数据 |
-| 原生生图 | Codex skill 化 | `image_prompts.md` + `imagegen` | 用 ChatGPT/Codex 原生生图生成 3-5 张海报 |
-| 图文发布 | 是 | `douyin_groupbuy_pipeline.py publish` | 上传图片、选音乐、挂国内 POI、发布 |
-| 视频发布 | 是 | `./bin/douyin-groupbuy publish-video` | 上传单条视频、挂带货模式国内 POI、发布 |
-| 团购位置 | 是 | runtime patch | 强制 `位置 -> 带货模式 -> 国内 -> 输入 POI -> 选匹配候选` |
-| 单浏览器发布 | 是 | runtime patch | 发布时不再另开 3 次 cookie 预检窗口，上传和登录校验共用一个 Chrome 会话 |
+## 脚本能做什么
 
-![命令和产物关系](assets/usage-map.svg)
+### 1. 从生意经选卡券
 
-## 安装
+- 支持“昨天”“近 7 日”等时间条件。
+- 支持按商品成交券数等指标取前 N 个商品。
+- 获取商品 ID 后回到抖音来客商品管理查询详情。
+- 内部数据只用于选品，不会自动写进公开推广文案。
 
-```bash
-git clone https://github.com/784697524-ux/douyin-groupbuy-auto-publish.git
-cd douyin-groupbuy-auto-publish
-./install.sh
-./scripts/apply_douyin_groupbuy_patch.sh
-```
+### 2. 生成公开推广工作包
 
-默认依赖本机 runtime：
+脚本会把商品信息整理成：
 
 ```text
-$HOME/.openclaw/workspace/social-auto-upload
+groupbuy_work/
+├── title.txt
+├── caption.txt
+├── image_prompts.md
+├── publish_meta.json
+└── images/
 ```
 
-如 runtime 在其他目录：
+`image_prompts.md` 可直接交给 Codex 的 `imagegen` 技能，生成 3-5 张原生图片。脚本不会用 HTML 截图冒充生图。
 
-```bash
-export SOCIAL_AUTO_UPLOAD_HOME="/path/to/social-auto-upload"
-```
+### 3. 发布团购图文
 
-## 快速使用
+- 上传 3-5 张图片。
+- 按内容选择推荐音乐，或使用指定音乐。
+- 填写标题、正文和话题。
+- 挂“位置 + 带货模式 + 国内”门店 POI。
+- 发布成功后进入作品管理页。
 
-需要单独确认账号状态时再检查登录；正常发布可直接运行发布命令：
+### 4. 发布团购视频
 
-```bash
-./bin/sau douyin check --account likai_douyin_2
-```
-
-选取昨日成交券数靠前的卡券：
-
-```bash
-python scripts/douyin_groupbuy_pipeline.py select \
-  --account likai_douyin_2 \
-  --groupid 1748531528342532 \
-  --date "昨天" \
-  --metric "商品成交券数" \
-  --limit 3 \
-  --output /Users/likai/Desktop/AI/图文团购/outputs/selection.json \
-  --headed
-```
-
-生成公开推广工作包：
-
-```bash
-python scripts/douyin_groupbuy_pipeline.py brief \
-  --selection /Users/likai/Desktop/AI/图文团购/outputs/selection.json \
-  --product-index 1 \
-  --output-dir /Users/likai/Desktop/AI/图文团购/outputs/groupbuy_work \
-  --location "合肥滨湖银泰百货"
-```
-
-用 Codex 原生生图读取：
-
-```text
-/Users/likai/Desktop/AI/图文团购/outputs/groupbuy_work/image_prompts.md
-```
-
-生成 3-5 张图片，并放到：
-
-```text
-/Users/likai/Desktop/AI/图文团购/outputs/groupbuy_work/images/
-```
-
-发布图文：
-
-```bash
-python scripts/douyin_groupbuy_pipeline.py publish \
-  --account likai_douyin_2 \
-  --work-dir /Users/likai/Desktop/AI/图文团购/outputs/groupbuy_work \
-  --location "合肥滨湖银泰百货" \
-  --bgm auto \
-  --headed
-```
-
-发布视频并挂团购位置：
+已经有 MP4 时，不需要重新走选品和生图。直接执行 `publish-video`：
 
 ```bash
 ./bin/douyin-groupbuy publish-video \
@@ -118,31 +66,145 @@ python scripts/douyin_groupbuy_pipeline.py publish \
   --headed
 ```
 
-该命令复用已验证成功的视频发布链路：`位置 -> 带货模式/视频位置入口 -> 国内 -> 输入门店 -> 等待候选 -> 选择匹配项 -> 发布`。
+这条命令会完成：上传视频、填写作品信息、选择国内门店位置、点击发布和检查成功状态。
 
-发布命令只启动一个 Chrome 会话。它会在这个会话里同时检查登录状态并完成上传；cookie 失效时会提示先执行 `douyin login`，不会再连续打开 4-5 个窗口。
+## 命令和产物
 
-位置选择会走下面这条固定链路，避免选成店铺级 POI：
+![命令和产物关系](assets/usage-map.svg)
+
+常用入口只有四个：
+
+| 命令 | 用途 |
+| --- | --- |
+| `select` | 从生意经选品并查询商品详情 |
+| `brief` | 生成公开推广工作包 |
+| `publish` | 发布团购图文并选择音乐 |
+| `publish-video` | 发布团购视频并挂国内位置 |
+
+## 团购位置不会只“输入”不“选择”
+
+位置发布按固定顺序执行：
+
+1. 添加标签选择“位置”。
+2. 进入“带货模式”。
+3. 切换到“国内”。
+4. 输入完整门店名。
+5. 等待候选加载。
+6. 选择匹配的商场级候选。
 
 ![团购位置选择示意](assets/poi-location.svg)
 
+候选项会按名称和门店类型评分。例如目标是“合肥滨湖银泰百货”时，商场级位置优先于“植村秀（滨湖银泰城店）”这类店铺级位置。
+
+## 一次发布只启动一个浏览器
+
+旧流程会在正式上传前最多启动 3 次 Chrome 检查 Cookie，真正上传时再启动一次。现在登录校验、上传、位置选择和发布共用同一个浏览器会话。
+
+![单浏览器发布会话](assets/single-browser.svg)
+
+Cookie 失效时，命令会提示重新登录，不会继续打开多个窗口。正常发布也不需要每次先运行 `douyin check`。
+
+## 安装
+
+```bash
+git clone https://github.com/784697524-ux/douyin-groupbuy-auto-publish.git
+cd douyin-groupbuy-auto-publish
+./install.sh
+./scripts/apply_douyin_groupbuy_patch.sh
+```
+
+默认使用本机运行环境：
+
+```text
+$HOME/.openclaw/workspace/social-auto-upload
+```
+
+运行环境不在默认目录时：
+
+```bash
+export SOCIAL_AUTO_UPLOAD_HOME="/path/to/social-auto-upload"
+./scripts/apply_douyin_groupbuy_patch.sh
+```
+
+## 从选品到图文发布
+
+### 第一步：选取昨日卡券
+
+```bash
+python scripts/douyin_groupbuy_pipeline.py select \
+  --account likai_douyin_2 \
+  --groupid 1748531528342532 \
+  --date "昨天" \
+  --metric "商品成交券数" \
+  --limit 3 \
+  --output /path/to/selection.json \
+  --headed
+```
+
+如果需要复用已经登录的 Chrome：
+
+```bash
+python scripts/douyin_groupbuy_pipeline.py select \
+  --account likai_douyin_2 \
+  --groupid 1748531528342532 \
+  --date "昨天" \
+  --metric "商品成交券数" \
+  --limit 3 \
+  --output /path/to/selection.json \
+  --cdp-url http://127.0.0.1:9222 \
+  --headed
+```
+
+### 第二步：生成推广工作包
+
+```bash
+python scripts/douyin_groupbuy_pipeline.py brief \
+  --selection /path/to/selection.json \
+  --product-index 1 \
+  --output-dir /path/to/groupbuy_work \
+  --location "合肥滨湖银泰百货"
+```
+
+读取 `/path/to/groupbuy_work/image_prompts.md`，调用 Codex 原生生图，并将图片放入：
+
+```text
+/path/to/groupbuy_work/images/
+```
+
+### 第三步：发布图文
+
+```bash
+python scripts/douyin_groupbuy_pipeline.py publish \
+  --account likai_douyin_2 \
+  --work-dir /path/to/groupbuy_work \
+  --location "合肥滨湖银泰百货" \
+  --bgm auto \
+  --headed
+```
+
 ## 成功标准
 
-- 选品：输出 `selection.json`，且包含商品名、商品 ID、公开文案所需商品信息。
-- 生成：工作目录包含 `title.txt`、`caption.txt`、`image_prompts.md`、`publish_meta.json`、`images/`。
-- 发布：CLI 返回发布成功，并进入作品管理页或平台成功状态；日志必须出现已选择的目标门店。
+任务只有满足下面条件才算完成：
 
-如果出现短信验证码、验证码、位置候选错误，不能算发布完成。
+- 选品：`selection.json` 包含排名商品和商品详情。
+- 内容：工作目录包含标题、正文、图片提示词和发布元数据。
+- 位置：日志确认选中了目标商场级 POI，而不是只在输入框里写了名称。
+- 发布：页面进入作品管理页，或出现平台明确的发布成功状态。
 
-## 隐私边界
+短信验证码、图形验证码、位置候选错误、只完成上传，都不能算发布成功。
 
-仓库不包含：
+## 公开内容边界
 
-- 抖音 cookie
-- 二维码
-- 浏览器 profile
-- 发布日志
-- 账号密码
-- 商品后台成交数据截图
+仓库和公开文案不会包含：
 
-公开文案和海报不要展示商品 ID、后台售卖张数、成交金额、内部排名。
+- 抖音 Cookie、二维码、账号密码和浏览器 Profile。
+- 商品 ID、后台销量、成交金额和内部排名。
+- 发布日志和带个人信息的后台截图。
+
+对外内容只使用消费者能够看到的商品权益、售价、使用日期、适用门店和退款规则。
+
+## 更多说明
+
+- [完整使用说明](references/usage.md)
+- [音乐和位置选择器说明](references/automa-selectors.md)
+- [公开推广文案规则](references/public-copy-rules.md)
